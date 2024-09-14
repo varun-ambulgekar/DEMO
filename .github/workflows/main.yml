@@ -1,0 +1,32 @@
+name: Lock branch after submission
+
+on:
+  push:
+    branches:
+      - 'team-*'
+
+jobs:
+  lock-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # To allow updating branch protection rules
+
+    steps:
+    - name: Lock the branch
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const branch = process.env.GITHUB_REF.replace('refs/heads/', '');
+          const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+          
+          await github.rest.repos.updateBranchProtection({
+            owner,
+            repo,
+            branch,
+            protection: {
+              required_status_checks: null,
+              enforce_admins: false,
+              required_pull_request_reviews: { dismiss_stale_reviews: true },
+              restrictions: { users: [], teams: [] }
+            }
+          });
